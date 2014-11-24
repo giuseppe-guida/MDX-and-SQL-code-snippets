@@ -1,0 +1,51 @@
+--Intro
+
+select
+[Product].[Product Model Lines].[Product Line] on columns,
+[Order Date].[Date H].[Year].&[2012].CHILDREN on rows --it works well als oby using the member name, in this case equal to the key .[2012]
+from [Adventure Works DW2014]
+where { [Measures].[Sales Amount]  };
+
+with set test_set AS 'DESCENDANTS( [Order Date].[Date H].[Year].&[2012], [Order Date].[Date H].[English Month Name])'
+select
+ORDER (
+	[Product].[Product Model Lines].[Product Line].&[M],
+	[Product].[Product Model Lines].CurrentMember.Member_Name, ASC
+)on columns,
+	test_set on rows
+from [Adventure Works DW2014]
+where { [Measures].[Sales Amount]  };
+
+with set test_set AS 'DESCENDANTS( [Order Date].[Date H].[Year].&[2012], [Order Date].[Date H].[English Month Name])'
+select
+	[Product].[Product Model Lines].[Product Line] on columns,
+	ORDER ( 
+		test_set,
+		test_set.CurrentMember.Member_Name, ASC
+	) on rows
+from [Adventure Works DW2014]
+where { [Measures].[Sales Amount]  };
+
+WITH MEMBER total AS {( [Measures].[Sales Amount], [Order Date].[Semester].[All] )}
+SELECT
+	{ ([Order Date].[Semester].[All]), ([Order Date].[Semester].&[2]&[2012]) } on rows, 
+	{ [Measures].[Sales Amount], [Measures].[Order Quantity] } on columns
+FROM [Adventure Works DW2014]
+	WHERE;
+
+WITH MEMBER total AS ( [Measures].[Sales Amount], [Order Date].[Semester].[All]), FORMAT_STRING = '$#,##0;-$#,##0;0'
+	MEMBER one_sem AS ( [Measures].[Sales Amount], [Order Date].[Semester].&[2]&[2012] ), FORMAT_STRING = '$#,##0;-$#,##0;\Z\e\r\o'
+	MEMBER perc AS ( one_sem / total ), FORMAT_STRING = 'percent'
+select
+	{ [Product].[Product Line].[Product Line] } on rows, 
+	{ total, one_sem, perc } on columns
+FROM [Adventure Works DW2014]
+
+--excercise - use current memeber to browse the cube regardless the dimensions
+WITH MEMBER total AS ( [Measures].[Sales Amount], [Order Date].[Semester].[All]), FORMAT_STRING = '$#,##0;-$#,##0;0'
+	MEMBER one_sem AS ( [Measures].[Sales Amount], [Order Date].[Semester].&[2]&[2012] ), FORMAT_STRING = '$#,##0;-$#,##0;\Z\e\r\o'
+	MEMBER perc AS ( one_sem / total ), FORMAT_STRING = 'percent'
+select
+	{ [Product].[Product Line].[Product Line] } on rows, 
+	{ total, one_sem, perc } on columns
+FROM [Adventure Works DW2014]
