@@ -1,0 +1,38 @@
+-- current member
+WITH MEMBER test AS [Order Date].[Date H].CurrentMember 
+SELECT
+	{ [Measures].[Order Quantity] } on columns,
+	{ [Order Date].[Date H].[Year].Members } on rows --it can take also just some members
+FROM [Adventure Works DW2014];
+
+-- current member
+WITH MEMBER test AS ([Measures].[Order Quantity], [Order Date].[Date H].CurrentMember)
+SELECT
+	{ test } on columns,
+	{ [Order Date].[Date H].[Year].Members } on rows --it can take also just some members
+FROM [Adventure Works DW2014];
+
+-- current member
+WITH MEMBER test AS ([Measures].[Order Quantity], [Order Date].[Date H].CurrentMember)
+SELECT
+	{ test } on columns,
+	{ [Order Date].[Date H].[Year].[2012], [Order Date].[Date H].[Year].[2013] } on rows --this is a set with 2 tuples
+FROM [Adventure Works DW2014];
+
+-- where clause - not alloed to spcify more than one member in any hirarchy in the where clause. why?
+WITH MEMBER test AS ([Measures].[Order Quantity], [Order Date].[Date H].CurrentMember, [Ship Date].[Date H].CurrentMember)
+SELECT
+	{ test } on columns,
+	[Product].[Product Model Lines].[Product Line] on rows
+FROM [Adventure Works DW2014]
+WHERE { ([Order Date].[Date H].[Year].[2012], [Ship Date].[Date H].[Year].[2013])
+}
+
+-- 
+WITH 
+	MEMBER test AS ([Measures].[Order Quantity], [Order Date].[Date H].CurrentMember)
+SELECT
+	{ test } on columns,
+	{  [Product].[Product Line].[Product Line].Members } on rows
+FROM [Adventure Works DW2014]
+WHERE { [Order Date].[Date H].[Year].[2014] }

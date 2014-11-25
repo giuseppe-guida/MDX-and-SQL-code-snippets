@@ -1,0 +1,18 @@
+-- count
+
+--example
+WITH
+    Member [Warehouse].[No. Locations] AS 'COUNT ( {[Warehouse].[City].MEMBERS } )'
+SELECT
+    { [Warehouse]. [No. Locations] } ON COLUMNS,
+    { [Product].[Product Department].Members} ON ROWS
+FROM [Warehouse]
+WHERE [Time].[1998]
+
+-- 
+WITH 
+	MEMBER n AS Count( { [Customer].[Country-Region].Members }, EXCLUDEEMPTY )
+SELECT
+	{ n } on columns,
+	{ [Customer].[Customer Geography].[Country-Region].Members } on rows
+FROM [Adventure Works DW2014]

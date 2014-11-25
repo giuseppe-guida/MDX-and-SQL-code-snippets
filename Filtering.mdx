@@ -1,0 +1,10 @@
+-- Filtering
+
+-- Filter(Set_Expression, Logical_Expression )
+WITH 
+	MEMBER n AS COUNT( ([Product].[Product Model Lines].[Product Name].Members, [Order Date].[Date H].CurrentMember) ) 
+	MEMBER price AS ( [Measures].[Unit Price] / n ), FORMAT_STRING = '$#,##0;'
+select
+	{ [Order Date].[Date H].[Year].&[2011] } on rows,
+	{ price, n } on columns
+FROM [Adventure Works DW2014]
