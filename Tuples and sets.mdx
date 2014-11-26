@@ -1,12 +1,65 @@
 --Tuples and sets
 
+
+-- **** TUPLES
+-- tuples are a slice of data of a cub where all dimensions. 
+-- Put another way, a tuple is a vector of members; think of a tuple as one or more records in the underlying database whose value in these columns falls under these categories. 
+-- a set is composed by tuples having same dimensions
+-- A tuple can encompass members in multiple dimensions, as well as multiple members from the same dimension. BUT NOT FROM THE SAME HIERARCHY
+SELECT
+	{ ([Customer].[Country-Region].&[France], [Order Date].[Year].&[2012]), ([Customer].[Country-Region].&[Germany], [Order Date].[Year].&[2012]) } on 0,
+	{ [Product].[Product Line].&[R] } on 1
+FROM [Adventure Works DW2014]
+WHERE [Measures].[Extended Amount];
+
+SELECT
+	{ ( [Customer].[Country-Region], [Order Date].[Year].&[2012] ) } on 0, -- CountryRegion DIMENSION ATTRIBUTE: when a LEVEL is specified in a tuple it is assumed ALL MEMBERS under a sole column (ALL)
+	{ [Product].[Product Line].&[R] } on 1
+FROM [Adventure Works DW2014]
+WHERE [Measures].[Extended Amount];
+
+SELECT --[Customer].[Country-Region].[Country-Region] is the same as [Customer].[Country-Region].[Country-Region].Members (look at the tree representation)
+	{ ( [Customer].[Country-Region].[Country-Region], [Order Date].[Year].&[2012] ) } on rows, -- CountryRegion LEVEL: all children are separeted
+	{ [Product].[Product Line].&[R] } on columns
+FROM [Adventure Works DW2014]
+WHERE [Measures].[Extended Amount];
+
+SELECT
+	{ ( [Customer].[Country-Region].Members, [Order Date].[Year].&[2012] ) } on rows, -- [Customer].[Country-Region].MEmbers : DIMENSIONAL ATTRIBUTE MEMBERS
+	{ [Product].[Product Line].&[R] } on columns
+FROM [Adventure Works DW2014]
+WHERE [Measures].[Extended Amount];
+
+SELECT
+	{ ( [Customer].[Country-Region].[All], [Order Date].[Year].&[2012] ) } on rows, -- [ALL] as a unique field
+	{ [Product].[Product Line].&[R] } on columns
+FROM [Adventure Works DW2014]
+WHERE [Measures].[Extended Amount];
+
+SELECT --ERROR
+	{ ( [Customer].[Country-Region].[All].CHILDREN, [Order Date].[Year].&[2012] ) } on rows, -- [ALL] is a member. [ALL].Member cant be used
+FROM [Adventure Works DW2014]
+WHERE [Measures].[Extended Amount];
+
+
+-- **** SETS
+//A set is an ordered collection of zero, one or more tuples. A set is most commonly used to define axis 
+//and slicer dimensions in an MDX query, and as such may have only a single tuple or may be, in certain cases, empty. 
+//Sets and Dimensionality
+//Like tuples, sets also have dimensionality. As a set is composed of tuples, so the dimensionality of 
+//a set is expressed by the dimensionality of each tuple within it. Because of this, tuples within a set must have the same dimensionality.
+// In other words, this example would not work as a set:
+//{ (Time.[2nd half], Route.nonground.air), (Route.nonground.air, Time.[2nd half]) }
+//The order of tuples in a set is important; it affects, for example, the nesting order in an axis dimension. 
+//The first tuple represents the first, or outermost, dimension, the second tuple represents the next outermost dimension, and so on.
+
+
+-- Some functions DESCENDANTS and CHILDREN
 select
 [Product].[Product Model Lines].[Product Line] on columns,
-[Order Date].[Date H].[Year].&[2012].CHILDREN on rows --it works well als oby using the member name, in this case equal to the key .[2012]
+[Order Date].[Date H].[Year].&[2012].CHILDREN on rows --it works well also by using the member name, in this case equal to the key .[2012]
 from [Adventure Works DW2014]
 where { [Measures].[Sales Amount]  };
-
-
 
 with 
 	SET test_set AS 'DESCENDANTS( [Order Date].[Date H].[Year].&[2012], [Order Date].[Date H].[English Month Name])'
@@ -34,14 +87,6 @@ from [Adventure Works DW2014]
 where { [Measures].[Sales Amount]  };
 
 
-
-SELECT
-	{ ([Order Date].[Semester].[All]), ([Order Date].[Semester].&[2]&[2012]) } on rows, 
-	{ [Measures].[Sales Amount], [Measures].[Order Quantity] } on columns
-FROM [Adventure Works DW2014];
-
-
-
 WITH MEMBER total AS ( [Measures].[Sales Amount], [Order Date].[Semester].[All]), FORMAT_STRING = '$#,##0;-$#,##0;0'
 	MEMBER one_sem AS ( [Measures].[Sales Amount], [Order Date].[Semester].&[2]&[2012] ), FORMAT_STRING = '$#,##0;-$#,##0;\Z\e\r\o'
 	MEMBER perc AS ( one_sem / total ), FORMAT_STRING = 'percent'
@@ -65,25 +110,5 @@ FROM [Adventure Works DW2014]
 WHERE { ([Order Date].[Year].&[2012]) };
 
 
---non empty
-WITH 
-	MEMBER sem1 AS ( [Measures].[Sales Amount], [Order Date].[Date H].[Semester].&[1]&[2012] ) 
-		, FORMAT_STRING = '$#,##0;-$#,##0;\Z\e\r\o'
-	MEMBER empt AS IIF( IsEmpty(sem1), 0 , 1) 
-select
-	Non Empty { [Product].[Product Line].[Product Line] } on rows, 
-	{ sem1 } on columns
-FROM [Adventure Works DW2014]
-WHERE { ([Order Date].[Year].&[2012]) };
 
-
---empty to zero
-WITH 
-	MEMBER sem1 AS ( [Measures].[Sales Amount], [Order Date].[Date H].[Semester].&[1]&[2012] ) 
-	MEMBER nonZero AS IIF( ISEMPtY(sem1), 0, sem1 ), FORMAT_STRING = '$#,##0'
-select
-	{ [Product].[Product Line].[Product Line] } on rows,
-	{ nonZero } on columns
-FROM [Adventure Works DW2014]
-WHERE { ([Order Date].[Year].&[2012]) }
 

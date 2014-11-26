@@ -16,3 +16,10 @@ SELECT
 	{ n } on columns,
 	{ [Customer].[Customer Geography].[Country-Region].Members } on rows
 FROM [Adventure Works DW2014]
+
+
+SELECT
+	{ ([Customer].[Country-Region].&[France], [Order Date].[Year].&[2012]), ([Customer].[Country-Region].&[Germany], [Order Date].[Year].&[2012]) } on 0,
+	{ [Product].[Product Line].&[R] } on 1
+FROM [Adventure Works DW2014]
+WHERE [Measures].[Extended Amount]
