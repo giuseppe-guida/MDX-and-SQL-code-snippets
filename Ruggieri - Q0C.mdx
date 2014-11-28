@@ -1,0 +1,30 @@
+WITH
+	MEMBER Sales AS COALESCEEMPTY( ([Measures].[Sales Amount]), 0), FORMAT_STRING = '$#,##0;$-#,##0;$0'
+
+	MEMBER Filtered AS 
+		SUM( FILTER (
+				{ ([Order Date].[Date H].CurrentMember, [Customer].[Customer Geography].CurrentMember) }
+				, ([Order Date].[Date H].CurrentMember, [Customer].[Customer Geography].CurrentMember, Sales) > 10000
+			), Sales
+		)
+	MEMBER TotalPerCountry AS ( [Order Date].[Date H].CURRENTMEMBER, [Customer].[Customer Geography].CurrentMember.Parent.Parent, Sales) --WHY [Customer].[Country-Region].cURRENTmEMBER INSTEAD WORKS ?
+	MEMBER Perc AS (Filtered / TotalPerCountry),  FORMAT_STRING = 'percent'
+SELECT
+	{ ([Order Date].[Date H].[Quarter], Filtered)
+		,([Order Date].[Date H].[Quarter], Perc) } on columns,
+	non empty{ ([Customer].[Customer Geography].[City]) } on rows
+FROM [Adventure Works DW2014]
+WHERE ([Order Date].[Year].&[2012] )
+
+--partial queries to check resutls
+select
+	 { ([Order Date].[Date H].[Quarter], [Customer].[City].&[Hawthorne]&[Queensland]) } ON ROWS,
+[Measures].[Sales Amount] ON COLUMNS
+FROM [Adventure Works DW2014]
+WHERE [Order Date].[Year].&[2012]
+
+select
+	{ ([Order Date].[Date H].[Quarter].MEMBERS, [Customer].[Customer Geography].[Country-Region].members, [Measures].[Sales Amount]) } ON ROWS,
+	{} ON COLUMNS
+FROM [Adventure Works DW2014]
+WHERE [Order Date].[Year].&[2012]

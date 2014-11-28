@@ -1,0 +1,49 @@
+-- Q0a: sales by quarter and customer city in absolute value
+WITH		
+	MEMBER Sales AS COALESCEEMPTY(([Measures].[Sales Amount]), 0), FORMAT_STRING = '$#,##0;$-#,##0;$0'
+SELECT
+	{ (DESCENDANTS( [Order Date].[Date H].[Year].&[2012], [Order Date].[Date H].[Quarter] ) ) } on columns,
+	Filter ( { [Customer].[City].[City].MEMBERS }, ([Sales]) > 10000) on rows --not correct. ths doesnt filter on the date. look below
+FROM [Adventure Works DW2014]
+WHERE { Sales }
+
+--This filter doesn't work because the date hierarchy is not included in the filter returned set
+WITH
+	MEMBER Sales AS COALESCEEMPTY(
+		([Measures].[Sales Amount], [Order Date].[Date H].CurrentMember, [Customer].[City].CurrentMember), 0
+	)
+	, FORMAT_STRING = '$#,##0;$-#,##0;$0'
+
+	SET f AS FILTER (
+			{ [Customer].[City].[City].MEMBERS }, (Sales, [Order Date].[Date H].CurrentMember, [Customer].[City].CurrentMember) > 10000
+	)
+SELECT
+	{ DESCENDANTS( [Order Date].[Date H].[Year].&[2012], [Order Date].[Date H].[Quarter] )  } on columns,
+	{ f, Sales } on rows
+FROM [Adventure Works DW2014]
+WHERE { Sales }
+
+--This works instead
+WITH
+	MEMBER Sales AS COALESCEEMPTY(
+		([Measures].[Sales Amount], [Order Date].[Date H].CurrentMember, [Customer].[City].CurrentMember), 0
+	)
+	, FORMAT_STRING = '$#,##0;$-#,##0;$0'
+
+	SET f AS FILTER (
+			{ (DESCENDANTS( [Order Date].[Date H].[Year].&[2012], [Order Date].[Date H].[Quarter] ), [Customer].[City].[City].MEMBERS) }
+			, (Sales, [Order Date].[Date H].CurrentMember, [Customer].[City].CurrentMember) > 10000
+	)
+SELECT
+	{ ([Product].[Product Line].[Product Line], Sales)
+		,([Product].[Product Line], Sales)  } on columns,
+	{ (f) 
+		,([Order Date].[Date H].[Year].&[2012], [Customer].[City])
+	} on rows
+FROM [Adventure Works DW2014]
+
+//Solution by Ruggieri
+select 
+	nonempty(crossjoin([Time].[DayMonthYear].[Quarter], [Measures].[Store Sales])) on columns,
+	[Customer].[Geography].[City] on rows
+from sales
