@@ -1,0 +1,47 @@
+
+-- Crossjoins
+SELECT
+	Non Empty ( {[Order Date].[Date H].[Semester].&[1]&[2012].Children} * {[Product].[Product Line].[Product Line]} ) on rows,
+	[Customer].[Customer Geography].[Country-Region] * ({[Measures].[Order Quantity], [Measures].[Sales Amount]}) on columns
+FROM [Adventure Works DW2014]
+
+-- Count
+WITH 
+	MEMBER n AS ( COUNT( [Product].[Product Model Lines].[Product Name].Members ) )
+	MEMBER price AS ( [Measures].[Unit Price] / n ), FORMAT_STRING = '$#,##0;'
+select
+	{ [Order Date].[Date H].[Year].&[2012] } on rows,
+	{ price, n } on columns
+FROM [Adventure Works DW2014]
+
+-- Top Count
+SELECT
+	{ TopCount([Product].[Product Model Lines].[Product Name].Members, 5, [Measures].[Order Quantity]) } on rows,
+	{ [Measures].[Order Quantity], [Measures].[Freight] } on columns
+FROM [Adventure Works DW2014];
+
+-- Parallel period
+SELECT
+	{ [Order Date].[Date H].[English Month Name].&[February]&[2012],
+		ParallelPeriod( [Order Date].[Date H].[English Month Name],1 ,[Order Date].[Date H].[English Month Name].&[February]&[2012]) } ON COLUMNS,
+	{ [Measures].[Order Quantity], [Measures].[Freight] } on rows
+FROM [Adventure Works DW2014];
+
+-- current member
+WITH MEMBER test AS [Order Date].[Date H].CurrentMember 
+SELECT
+	{ [Measures].[Order Quantity] } on columns,
+	{ [Order Date].[Date H].[Year].Members } on rows --it can take also just some members
+FROM [Adventure Works DW2014]
+
+
+-- Filtering
+-- Filter(Set_Expression, Logical_Expression )
+WITH 
+	MEMBER n AS COUNT( ([Product].[Product Model Lines].[Product Name].Members, [Order Date].[Date H].CurrentMember) ) 
+	MEMBER price AS ( [Measures].[Unit Price] / n ), FORMAT_STRING = '$#,##0;'
+select
+	{ [Order Date].[Date H].[Year].&[2011] } on rows,
+	{ price, n } on columns
+FROM [Adventure Works DW2014]
+

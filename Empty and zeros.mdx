@@ -1,0 +1,21 @@
+--non empty
+WITH 
+	MEMBER sem1 AS ( [Measures].[Sales Amount], [Order Date].[Date H].[Semester].&[1]&[2012] ) 
+		, FORMAT_STRING = '$#,##0;-$#,##0;\Z\e\r\o'
+	MEMBER empt AS IIF( IsEmpty(sem1), 0 , 1) 
+select
+	Non Empty { [Product].[Product Line].[Product Line] } on rows, 
+	{ sem1 } on columns
+FROM [Adventure Works DW2014]
+WHERE { ([Order Date].[Year].&[2012]) };
+
+
+--empty to zero
+WITH 
+	MEMBER sem1 AS ( [Measures].[Sales Amount], [Order Date].[Date H].[Semester].&[1]&[2012] ) 
+	MEMBER nonZero AS IIF( ISEMPtY(sem1), 0, sem1 ), FORMAT_STRING = '$#,##0'
+select
+	{ [Product].[Product Line].[Product Line] } on rows,
+	{ nonZero } on columns
+FROM [Adventure Works DW2014]
+WHERE { ([Order Date].[Year].&[2012]) }

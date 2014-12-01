@@ -1,0 +1,27 @@
+//Q1: top 5 categories in the CA state
+
+-- Top 5 elements in absolute, monitored in each country
+WITH
+	SET TOP5MODELS AS TOPCOUNT(  
+		{ ([Product].[Model Name].[Model Name]) }, 
+		5, 
+		[Measures].[Sales Amount] )
+SELECT
+	{ [Measures].[Sales Amount] } ON COLUMNS,
+	{ ([Customer].[Customer Geography].[State-Province].MEMBERS, TOP5MODELS) } ON ROWS
+FROM [Adventure Works DW2014]
+
+-- Top 5 elements grouped by country and model
+WITH
+	SET TOP5MODELS AS TOPCOUNT(  
+		{ ([Customer].[Customer Geography].[State-Province].MEMBERS,[Product].[Model Name].[Model Name]) }, 
+		5, 
+		[Measures].[Sales Amount] )
+SELECT
+	{ [Measures].[Sales Amount] } ON COLUMNS,
+	{ (TOP5MODELS) } ON ROWS
+FROM [Adventure Works DW2014]
+
+--Resllers ordered by sales amount in each country
+WITH
+	

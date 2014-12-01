@@ -1,0 +1,44 @@
+-- Q0b: sales by quarter and customer city in percentage wrt total sales
+
+--example
+WITH MEMBER total AS ( [Measures].[Sales Amount], [Order Date].[Semester].[All]), FORMAT_STRING = '$#,##0;-$#,##0;0'
+	MEMBER one_sem AS ( [Measures].[Sales Amount], [Order Date].[Semester].&[2]&[2012] ), FORMAT_STRING = '$#,##0;-$#,##0;\Z\e\r\o'
+	MEMBER perc AS ( one_sem / total ), FORMAT_STRING = 'percent'
+select
+	{ [Product].[Product Line].[Product Line] } on rows, 
+	{ total, one_sem, perc } on columns
+FROM [Adventure Works DW2014];
+
+-- Q01b
+WITH
+	MEMBER Sales AS COALESCEEMPTY( ([Measures].[Sales Amount]), 0), FORMAT_STRING = '$#,##0;$-#,##0;$0'
+
+	MEMBER Filtered AS 
+		SUM( FILTER (
+				{ ([Order Date].[Date H].CurrentMember, [Customer].[City].CurrentMember) }
+				, ([Order Date].[Date H].CurrentMember, [Customer].[City].CurrentMember, Sales) > 10000
+			), Sales
+		)
+	MEMBER TotalWRTAllCities AS
+		SUM( { ([Order Date].[Date H].CURRENTMEMBER, [Customer].[City].[All]) }
+			, Sales
+		)
+	MEMBER test AS (Filtered / TotalWRTAllCities),  FORMAT_STRING = 'percent'
+SELECT
+	{ Filtered,TotalWRTAllCities, test } on columns,
+	non empty{ ([Order Date].[Date H].[Quarter], [Customer].[City].[City].Members)  } on rows
+FROM [Adventure Works DW2014]
+WHERE [Order Date].[Year].&[2012]
+
+--partial queries to check resutls
+select
+	 { ([Order Date].[Date H].[Quarter], [Customer].[City].&[Hawthorne]&[Queensland]) } ON ROWS,
+[Measures].[Sales Amount] ON COLUMNS
+FROM [Adventure Works DW2014]
+WHERE [Order Date].[Year].&[2012]
+
+select
+	{ ([Order Date].[Date H].[Quarter].MEMBERS, [Customer].[City].[All]) } ON ROWS,
+	[Measures].[Sales Amount] ON COLUMNS
+FROM [Adventure Works DW2014]
+WHERE [Order Date].[Year].&[2012]
